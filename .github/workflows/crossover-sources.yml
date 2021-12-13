@@ -67,7 +67,7 @@ jobs:
       - name: checkout master
         run: |
           git branch
-          git checkout master
+          git checkout -f master
 
       - name: fetch from master
         run: git fetch origin master
