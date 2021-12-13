@@ -25,9 +25,9 @@ jobs:
       - name: Download latest
         run: python3 ./.github/workflows/crossover-sources.py
 
-      - run: NAME=$(jq -r .name *.json)
-      - run: VER=$(jq -r .version *.json)
-      - run: URL=$(jq -r .url *.json)
+      - run: export NAME=$(jq -r .name *.json)
+      - run: export VER=$(jq -r .version *.json)
+      - run: export URL=$(jq -r .url *.json)
 
       - run: mkdir source
       - run: mv -v $(NAME) source
