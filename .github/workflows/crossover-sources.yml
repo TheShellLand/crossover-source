@@ -26,11 +26,12 @@ jobs:
         run: python3 ./.github/workflows/crossover-sources.py
 
       - run: export NAME=$(jq -r .name *.json) && echo $NAME
-      - run: export VER=$(jq -r .version *.json)
-      - run: export URL=$(jq -r .url *.json)
+      - run: export VER=$(jq -r .version *.json) && echo $VER
+      - run: export URL=$(jq -r .url *.json) && echo $URL
+      - run: echo $NAME $VER $URL
 
       - run: mkdir source
-      - run: mv -v "${{ env.NAME }}" source
+      - run: mv -v $(NAME) source
       - run: mv -v "${{ env.NAME }}.json" source
       - run: mv -v source /tmp
 
