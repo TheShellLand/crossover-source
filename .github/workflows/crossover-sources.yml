@@ -66,9 +66,7 @@ jobs:
           git push -u origin HEAD:${{ env.VER }}
 
       - name: checkout master
-        run: |
-          git branch
-          git checkout -f master
+        run: git checkout -b master
 
       - name: fetch from master
         run: git fetch origin master
