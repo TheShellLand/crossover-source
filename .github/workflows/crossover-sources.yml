@@ -65,7 +65,9 @@ jobs:
           git push origin HEAD:${{ env.VER }}
 
       - name: checkout master
-        run: git checkout master
+        run: |
+          git branch
+          git checkout master
 
       - name: fetch from master
         run: git fetch origin master
