@@ -31,7 +31,7 @@ jobs:
       - run: echo $NAME $VER $URL
 
       - run: mkdir source
-      - run: mv -v $(NAME) source
+      - run: mv -v "$(NAME)" source
       - run: mv -v "${{ env.NAME }}.json" source
       - run: mv -v source /tmp
 
