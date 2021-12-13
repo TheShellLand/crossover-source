@@ -56,7 +56,10 @@ jobs:
         run: git commit -m "latest changes ${{ env.VER }} ${{ env.NAME }} ${{ env.URL }}"
 
       - name: push branch
-        run: git push origin HEAD:${{ env.VER }}
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          git push origin HEAD:${{ env.VER }}
 
       - name: checkout master
         run: git checkout master
