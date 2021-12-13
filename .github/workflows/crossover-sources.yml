@@ -16,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - run: python3 -m pip install -U -r ./.github/workflows/requirements.txt
+
       - name: Download latest
         run: python3 ./.github/workflows/crossover-sources.py
 
