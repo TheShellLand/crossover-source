@@ -72,7 +72,7 @@ jobs:
         run: |
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          git fetch origin main
+          git pull --rebase origin main
 
       - name: merge into main
         run: git merge ${{ env.VER }}
