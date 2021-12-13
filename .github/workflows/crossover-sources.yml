@@ -57,7 +57,7 @@ jobs:
       - name: stage changed files
         run: git add .
       - name: commit changed files
-        run: git commit -m "latest changes ${{ env.VER }} ${{ env.NAME }} ${{ env.URL }}"
+        run: git commit -m "latest changes ${{ env.VER }} ${{ env.NAME }} ${{ env.URL }}" || true
 
       - name: push branch
         run: |
