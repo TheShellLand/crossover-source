@@ -65,22 +65,20 @@ jobs:
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
           git push -u origin HEAD:${{ env.VER }}
 
-      - name: checkout master
-        run: git checkout -b master
+      - name: checkout main
+        run: git checkout -b main
 
-      - name: fetch from master
+      - name: fetch from main
         run: |
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          git branch -v 
-          git remote -v 
-          git fetch origin master
+          git fetch origin main
 
-      - name: merge into master
+      - name: merge into main
         run: git merge ${{ env.VER }}
 
-      - name: push code to master
+      - name: push code to main
         run: |
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          git push origin HEAD:master
+          git push origin HEAD:main
