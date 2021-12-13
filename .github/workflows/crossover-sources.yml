@@ -12,6 +12,7 @@ jobs:
 
   # https://media.codeweavers.com/pub/crossover/source/crossover-sources-21.1.0.tar.gz
   source-code:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v1
