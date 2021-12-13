@@ -41,6 +41,7 @@ jobs:
 
       - run: git clean -xdf
       - run: git branch -f ${{ env.VER }} || git checkout ${{ env.VER }}
+      - run: git branch -v
 
       - name: copy latest
         run: tar -zxf /tmp/source/${{ env.NAME }} -C /tmp/source
@@ -59,7 +60,7 @@ jobs:
         run: |
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          git push -u origin ${{ env.VER }}
+          git push 
 
       - name: checkout master
         run: git checkout master
