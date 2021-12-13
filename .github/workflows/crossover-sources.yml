@@ -35,7 +35,7 @@ jobs:
       - run: mv -v source /tmp
 
       - run: git clean -xdf
-      - run: git branch -f --track ${{ env.VER }} || git checkout ${{ env.VER }}
+      - run: git branch -f ${{ env.VER }} || git checkout ${{ env.VER }}
 
       - name: copy latest
         run: tar -zxf /tmp/source/${{ env.NAME }} -C /tmp/source
