@@ -31,15 +31,15 @@ jobs:
       - run: echo $NAME $VER $URL
 
       - run: mkdir source
-      - run: mv -v "$(NAME)" source
-      - run: mv -v "${{ env.NAME }}.json" source
+      - run: mv -v "$NAME" source
+      - run: mv -v "$NAME.json" source
       - run: mv -v source /tmp
 
       - run: git clean -xdf
-      - run: git checkout ${{ env.VER }}
+      - run: git checkout $VER
 
       - name: copy latest
-        run: tar -zxf /tmp/source/${{ env.NAME }} -C /tmp/source
+        run: tar -zxf /tmp/source/$NAME -C /tmp/source
       - run: rsync -arvh --delete /tmp/source/*/* .
 
       - name: switching from HTTPS to SSH
@@ -49,7 +49,7 @@ jobs:
       - name: stage changed files
         run: git add .
       - name: commit changed files
-        run: git commit -m "latest changes ${{ env.VER }} ${{ env.NAME }} ${{ env.URL }}"
+        run: git commit -m "latest changes $VER $NAME $URL"
 
       - name: push branch
         run: git push origin HEAD:$VER
@@ -61,7 +61,7 @@ jobs:
         run: git fetch origin master
 
       - name: merge into master
-        run: git merge ${{ env.VER }}
+        run: git merge $VER
 
       - name: push code to master
         run: git push origin HEAD:master
