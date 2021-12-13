@@ -44,7 +44,7 @@ jobs:
       - run: git clean -xdf
       - run: git checkout -b ${{ env.VER }}
       - run: git reset --hard
-      - run: git pull --rebase origin ${{ env.VER }}
+#       - run: git pull --rebase origin ${{ env.VER }}
 
       - name: copy latest
         run: tar -zxf /tmp/source/${{ env.NAME }} -C /tmp/source
