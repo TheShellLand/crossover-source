@@ -45,11 +45,10 @@ jobs:
       - run: git checkout -b ${{ env.VER }}
       - run: git reset --hard
       - run: git pull --rebase origin ${{ env.VER }}
-      - run: git branch -v
 
       - name: copy latest
         run: tar -zxf /tmp/source/${{ env.NAME }} -C /tmp/source
-      - run: rsync -arvh --delete /tmp/source/*/* .
+      - run: rsync --stats -arh --delete /tmp/source/*/* .
 
       - name: switching from HTTPS to SSH
         run: git remote set-url origin ${{ secrets.GIT_SSH }}
