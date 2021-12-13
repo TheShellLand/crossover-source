@@ -30,9 +30,8 @@ jobs:
       - run: export URL=$(jq -r .url *.json)
 
       - run: mkdir source
-      - run: mv -v ${{ env.NAME }} source
-      - run: mv -v ${{ env.NAME }}.json source
-      - run: mkdir /tmp
+      - run: mv -v "${{ env.NAME }}" source
+      - run: mv -v "${{ env.NAME }}.json" source
       - run: mv -v source /tmp
 
       - run: git clean -xdf
