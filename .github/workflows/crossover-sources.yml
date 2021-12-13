@@ -47,7 +47,7 @@ jobs:
       - run: rsync -arvh --delete /tmp/source/*/* .
 
       - name: switching from HTTPS to SSH
-        run: git remote set-url origin ${{ secrets.git_ssh }}
+        run: git remote set-url origin ${{ secrets.GIT_SSH }}
       - name: check for changes
         run: git status
       - name: stage changed files
