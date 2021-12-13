@@ -43,6 +43,7 @@ jobs:
 
       - run: git clean -xdf
       - run: git checkout -b ${{ env.VER }}
+      - run: git pull --rebase
       - run: git branch -v
 
       - name: copy latest
