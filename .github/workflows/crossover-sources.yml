@@ -7,7 +7,7 @@ on:
     branches: [ '*' ]
 
   schedule:
-    - cron:  '* 0 * * *'
+    - cron: '* 0 * * *'
 
 
 jobs:
@@ -69,10 +69,16 @@ jobs:
         run: git checkout -b master
 
       - name: fetch from master
-        run: git fetch origin master
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          git fetch origin master
 
       - name: merge into master
         run: git merge ${{ env.VER }}
 
       - name: push code to master
-        run: git push origin HEAD:master
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          git push origin HEAD:master
