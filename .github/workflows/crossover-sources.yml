@@ -1,4 +1,4 @@
-name: get source code
+name: nightly pull
 
 on:
   push:
