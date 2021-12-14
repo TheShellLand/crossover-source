@@ -35,8 +35,6 @@ def main():
     html = html.drop(columns=html.columns[0])
     html = html.drop([*range(0, 2, 1)])
 
-    html.Name.apply(lambda x: type(x))
-
     filtered = html.sort_values('Last modified', ascending=False)
 
     # https://media.codeweavers.com/pub/crossover/source/crossover-sources-21.1.0.tar.gz
@@ -48,6 +46,7 @@ def main():
     sources = filtered[filtered.Version.notna()]
 
     latest = sources.iloc[0]
+    
     name = latest.Name
     url = latest.Url
     version = latest.Version
