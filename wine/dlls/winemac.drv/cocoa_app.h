@@ -68,7 +68,6 @@ enum {
 
 @class WineEventQueue;
 @class WineWindow;
-@protocol WineClipCursorHandler;
 
 
 @interface WineApplicationController : NSObject <NSApplicationDelegate>
@@ -121,9 +120,13 @@ enum {
     BOOL        cursorHidden;
     BOOL        clientWantsCursorHidden;
 
+    BOOL clippingCursor;
+    CGRect cursorClipRect;
+    CFMachPortRef cursorClippingEventTap;
+    NSMutableArray* warpRecords;
+    CGPoint synthesizedLocation;
     NSTimeInterval lastSetCursorPositionTime;
-
-    id<WineClipCursorHandler> clipCursorHandler;
+    NSTimeInterval lastEventTapEventTime;
 
     NSImage* applicationIcon;
 
@@ -143,11 +146,10 @@ enum {
 @property (readonly, nonatomic) BOOL temporarilyIgnoreResignEventsForDialog;
 
 @property (readonly) BOOL clippingCursor;
-@property (nonatomic) NSTimeInterval lastSetCursorPositionTime;
 
     + (WineApplicationController*) sharedController;
 
-    - (void) transformProcessToForeground:(BOOL)activateIfTransformed;
+    - (void) transformProcessToForeground;
 
     - (BOOL) registerEventQueue:(WineEventQueue*)queue;
     - (void) unregisterEventQueue:(WineEventQueue*)queue;
@@ -165,7 +167,6 @@ enum {
     - (void) windowWillOrderOut:(WineWindow*)window;
 
     - (void) flipRect:(NSRect*)rect;
-    - (NSPoint) flippedMouseLocation:(NSPoint)point;
 
     - (WineWindow*) frontWineWindow;
     - (void) adjustWindowLevels;
