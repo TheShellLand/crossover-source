@@ -171,7 +171,6 @@ static int (__cdecl *p__dpcomp)(double x, double y);
 static wchar_t** (CDECL *p____lc_locale_name_func)(void);
 static unsigned int (CDECL *p__GetConcurrency)(void);
 static void* (CDECL *p__W_Gettnames)(void);
-static void* (CDECL *p__Gettnames)(void);
 static void (CDECL *p_free)(void*);
 static float (CDECL *p_strtof)(const char *, char **);
 static int (CDECL *p__finite)(double);
@@ -243,7 +242,6 @@ static BOOL init(void)
     p____lc_locale_name_func = (void*)GetProcAddress(module, "___lc_locale_name_func");
     p__GetConcurrency = (void*)GetProcAddress(module,"?_GetConcurrency@details@Concurrency@@YAIXZ");
     p__W_Gettnames = (void*)GetProcAddress(module, "_W_Gettnames");
-    p__Gettnames = (void*)GetProcAddress(module, "_Gettnames");
     p_free = (void*)GetProcAddress(module, "free");
     p_strtof = (void*)GetProcAddress(module, "strtof");
     p__finite = (void*)GetProcAddress(module, "_finite");
@@ -533,7 +531,7 @@ static void test__GetConcurrency(void)
     ok(c == si.dwNumberOfProcessors, "expected %u, got %u\n", si.dwNumberOfProcessors, c);
 }
 
-static void test_gettnames(void* (CDECL *p_gettnames)(void))
+static void test__W_Gettnames(void)
 {
     static const char *str[] = {
         "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
@@ -559,7 +557,7 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
     if(!p_setlocale(LC_ALL, "english"))
         return;
 
-    ret = p_gettnames();
+    ret = p__W_Gettnames();
     size = ret->str[0]-(char*)ret;
     if(sizeof(void*) == 8)
         ok(size==0x2c0, "structure size: %x\n", size);
@@ -574,10 +572,6 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
         ok(!lstrcmpW(ret->wstr[i], buf), "ret->wstr[%d] = %s, expected %s\n",
                 i, wine_dbgstr_w(ret->wstr[i]), wine_dbgstr_w(buf));
     }
-
-    ok(ret->str[42] + strlen(ret->str[42])+1 == (char*)ret->wstr[0],
-            "ret->str[42] = %p len = %d, ret->wstr[0] = %p\n",
-            ret->str[42], strlen(ret->str[42]), ret->wstr[0]);
     p_free(ret);
 
     p_setlocale(LC_ALL, "C");
@@ -1117,8 +1111,7 @@ START_TEST(msvcr120)
     test__dpcomp();
     test____lc_locale_name_func();
     test__GetConcurrency();
-    test_gettnames(p__W_Gettnames);
-    test_gettnames(p__Gettnames);
+    test__W_Gettnames();
     test__strtof();
     test_remainder();
     test_critical_section();

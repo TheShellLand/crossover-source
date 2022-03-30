@@ -44,10 +44,7 @@ alias_map[] =
     { L"LogicalDisk", L"Win32_LogicalDisk" },
     { L"nic", L"Win32_NetworkAdapter" },
     { L"os", L"Win32_OperatingSystem" },
-    { L"process", L"Win32_Process" },
-    { L"baseboard", L"Win32_BaseBoard" },
-    { L"diskdrive", L"Win32_DiskDrive" },
-    { L"memorychip", L"Win32_PhysicalMemory" }
+    { L"process", L"Win32_Process" }
 };
 
 static const WCHAR *find_class( const WCHAR *alias )

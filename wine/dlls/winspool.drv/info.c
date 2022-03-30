@@ -740,18 +740,13 @@ fail:
 static WCHAR *get_ppd_filename( const WCHAR *dir, const WCHAR *file_name )
 {
     static const WCHAR dot_ppd[] = {'.','p','p','d',0};
-    static const WCHAR invalid_chars[] = {'*','?','<','>','|','"','/','\\',0};
-    int dir_len = strlenW( dir ), file_len = strlenW( file_name );
-    int len = (dir_len + file_len + ARRAY_SIZE( dot_ppd )) * sizeof(WCHAR);
-    WCHAR *ppd = HeapAlloc( GetProcessHeap(), 0, len ), *p;
+    int len = (strlenW( dir ) + strlenW( file_name )) * sizeof(WCHAR) + sizeof(dot_ppd);
+    WCHAR *ppd = HeapAlloc( GetProcessHeap(), 0, len );
 
     if (!ppd) return NULL;
-    memcpy( ppd, dir, dir_len * sizeof(WCHAR) );
-    memcpy( ppd + dir_len, file_name, file_len * sizeof(WCHAR) );
-    memcpy( ppd + dir_len + file_len, dot_ppd, sizeof(dot_ppd) );
-
-    p = ppd + dir_len;
-    while ((p = strpbrkW( p, invalid_chars ))) *p++ = '_';
+    strcpyW( ppd, dir );
+    strcatW( ppd, file_name );
+    strcatW( ppd, dot_ppd );
 
     return ppd;
 }
