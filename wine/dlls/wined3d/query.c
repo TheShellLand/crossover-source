@@ -444,11 +444,9 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
     {
         struct wined3d_device *device = query->device;
 
-        wined3d_mutex_lock();
         query->parent_ops->wined3d_object_destroyed(query->parent);
         wined3d_cs_destroy_object(device->cs, wined3d_query_destroy_object, query);
         device->adapter->adapter_ops->adapter_destroy_query(query);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -1663,6 +1661,7 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
     {
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
 
+        list_remove(&query_vk->entry);
         if (query_vk->pending_count)
             wined3d_context_vk_remove_pending_queries(context_vk, query_vk);
         memset((void *)query->data, 0, query->data_size);
@@ -1743,8 +1742,7 @@ static void wined3d_query_vk_destroy(struct wined3d_query *query)
     struct wined3d_query_vk *query_vk = wined3d_query_vk(query);
     struct wined3d_context_vk *context_vk;
 
-    if (query_vk->flags & WINED3D_QUERY_VK_FLAG_STARTED)
-        list_remove(&query_vk->entry);
+    list_remove(&query_vk->entry);
     if (query_vk->pending_count)
     {
         context_vk = wined3d_context_vk(context_acquire(query_vk->q.device, NULL, 0));
@@ -1944,6 +1942,7 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
     data = query_vk + 1;
 
     wined3d_query_init(&query_vk->q, device, type, data, data_size, ops, parent, parent_ops);
+    list_init(&query_vk->entry);
 
     switch (type)
     {

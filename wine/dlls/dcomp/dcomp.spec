@@ -13,9 +13,9 @@
 @ stub CreateEffectDescription
 @ stub DCompositionAttachMouseDragToHwnd
 @ stub DCompositionAttachMouseWheelToHwnd
-@ stdcall DCompositionCreateDevice2(ptr ptr ptr)
+@ stub DCompositionCreateDevice2
 @ stub DCompositionCreateDevice3
-@ stdcall DCompositionCreateDevice(ptr ptr ptr)
+@ stub DCompositionCreateDevice
 @ stub DCompositionCreateSurfaceHandle
 @ stub DeserializeEffectDescription
 @ stub DllCanUnloadNow
