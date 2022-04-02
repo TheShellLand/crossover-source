@@ -190,7 +190,7 @@ GpStatus WINGDIPAPI GdipCreateFont(GDIPCONST GpFontFamily *fontFamily,
     (*font)->unit = unit;
     (*font)->emSize = emSize;
     (*font)->otm = otm;
-    GdipCloneFontFamily((GpFontFamily*)fontFamily, &(*font)->family);
+    (*font)->family = (GpFontFamily *)fontFamily;
 
     TRACE("<-- %p\n", *font);
 
@@ -323,7 +323,8 @@ GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
     if (!(font && family))
         return InvalidParameter;
 
-    return GdipCloneFontFamily(font->family, family);
+    *family = font->family;
+    return Ok;
 }
 
 static REAL get_font_size(const GpFont *font)
@@ -745,8 +746,9 @@ GpStatus WINGDIPAPI GdipCreateFontFamilyFromName(GDIPCONST WCHAR *name,
         {
             if (!wcsicmp(lf.lfFaceName, collection->FontFamilies[i]->FamilyName))
             {
-                status = GdipCloneFontFamily(collection->FontFamilies[i], family);
+                *family = collection->FontFamilies[i];
                 TRACE("<-- %p\n", *family);
+                status = Ok;
                 break;
             }
         }
@@ -776,10 +778,6 @@ GpStatus WINGDIPAPI GdipCloneFontFamily(GpFontFamily *family, GpFontFamily **clo
     TRACE("%p (%s), %p\n", family, debugstr_w(family->FamilyName), clone);
 
     *clone = family;
-
-    if (!family->installed)
-        InterlockedIncrement(&family->ref);
-
     return Ok;
 }
 
@@ -836,11 +834,6 @@ GpStatus WINGDIPAPI GdipDeleteFontFamily(GpFontFamily *FontFamily)
 {
     if (!FontFamily)
         return InvalidParameter;
-
-    if (!FontFamily->installed && !InterlockedDecrement(&FontFamily->ref))
-    {
-        heap_free(FontFamily);
-    }
 
     return Ok;
 }
@@ -1086,7 +1079,7 @@ GpStatus WINGDIPAPI GdipDeletePrivateFontCollection(GpFontCollection **fontColle
     if (!fontCollection)
         return InvalidParameter;
 
-    for (i = 0; i < (*fontCollection)->count; i++) GdipDeleteFontFamily((*fontCollection)->FontFamilies[i]);
+    for (i = 0; i < (*fontCollection)->count; i++) heap_free((*fontCollection)->FontFamilies[i]);
     heap_free((*fontCollection)->FontFamilies);
     heap_free(*fontCollection);
 
@@ -1548,7 +1541,6 @@ GpStatus WINGDIPAPI GdipGetFontCollectionFamilyList(
 
     for (i = 0; i < numSought && i < fontCollection->count; i++)
     {
-        /* caller is responsible for cloning these if it keeps references */
         gpfamilies[i] = fontCollection->FontFamilies[i];
     }
 
@@ -1649,8 +1641,6 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     family->descent = fm.descent;
     family->line_spacing = fm.line_spacing;
     family->dpi = fm.dpi;
-    family->installed = param->is_system;
-    family->ref = 1;
 
     lstrcpyW(family->FamilyName, lfw->lfFaceName);
 

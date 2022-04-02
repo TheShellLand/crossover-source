@@ -22,7 +22,7 @@
 @ stub TdhGetWppMessage
 @ stub TdhGetWppProperty
 @ stdcall TdhLoadManifest(wstr)
-@ stdcall TdhLoadManifestFromBinary(wstr)
+@ stub TdhLoadManifestFromBinary
 @ stub TdhOpenDecodingHandle
 @ stub TdhQueryProviderFieldInformation
 @ stub TdhQueryRemoteWBEMProviderFieldInformation
