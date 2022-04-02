@@ -6790,34 +6790,25 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
     if (res != ERROR_SUCCESS || !value)
        goto done;
 
-    if (value)
+    if (value && !deformat_string(package, value, &deformatted))
     {
-        DWORD len = deformat_string( package, value, &deformatted );
-        if (!deformatted)
-        {
-            res = ERROR_OUTOFMEMORY;
-            goto done;
-        }
+        res = ERROR_OUTOFMEMORY;
+        goto done;
+    }
 
-        if (len)
+    if ((value = deformatted))
+    {
+        if (flags & ENV_MOD_PREFIX)
         {
-            value = deformatted;
-            if (flags & ENV_MOD_PREFIX)
-            {
-                p = wcsrchr( value, ';' );
-                len_value = p - value;
-            }
-            else if (flags & ENV_MOD_APPEND)
-            {
-                value = wcschr( value, ';' ) + 1;
-                len_value = lstrlenW( value );
-            }
-            else len_value = lstrlenW( value );
+            p = wcsrchr( value, ';' );
+            len_value = p - value;
         }
-        else
+        else if (flags & ENV_MOD_APPEND)
         {
-            value = NULL;
+            value = wcschr( value, ';' ) + 1;
+            len_value = lstrlenW( value );
         }
+        else len_value = lstrlenW( value );
     }
 
     res = open_env_key( flags, &env );
@@ -7006,34 +6997,22 @@ static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
         return ERROR_SUCCESS;
     }
 
-    if (value)
-    {
-        DWORD len = deformat_string( package, value, &deformatted );
-        if (!deformatted)
-        {
-            res = ERROR_OUTOFMEMORY;
-            goto done;
-        }
+    if (value && !deformat_string( package, value, &deformatted ))
+        return ERROR_OUTOFMEMORY;
 
-        if (len)
+    if ((value = deformatted))
+    {
+        if (flags & ENV_MOD_PREFIX)
         {
-            value = deformatted;
-            if (flags & ENV_MOD_PREFIX)
-            {
-                p = wcsrchr( value, ';' );
-                len_value = p - value;
-            }
-            else if (flags & ENV_MOD_APPEND)
-            {
-                value = wcschr( value, ';' ) + 1;
-                len_value = lstrlenW( value );
-            }
-            else len_value = lstrlenW( value );
+            p = wcschr( value, ';' );
+            len_value = p - value;
         }
-        else
+        else if (flags & ENV_MOD_APPEND)
         {
-            value = NULL;
+            value = wcschr( value, ';' ) + 1;
+            len_value = lstrlenW( value );
         }
+        else len_value = lstrlenW( value );
     }
 
     r = open_env_key( flags, &env );

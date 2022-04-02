@@ -1033,7 +1033,6 @@ DATETIME_Button_Command (DATETIME_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         DWORD state = SendMessageW((HWND)lParam, BM_GETCHECK, 0, 0);
         infoPtr->dateValid = (state == BST_CHECKED);
         InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
-        DATETIME_SendDateTimeChangeNotify(infoPtr);
     }
     return 0;
 }
