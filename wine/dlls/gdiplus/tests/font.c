@@ -72,7 +72,7 @@ static void test_long_name(void)
     GpStatus stat;
     GpFontCollection *fonts;
     INT num_families;
-    GpFontFamily *family, *cloned_family;
+    GpFontFamily *family;
     WCHAR family_name[LF_FACESIZE];
     GpFont *font;
 
@@ -98,10 +98,6 @@ static void test_long_name(void)
     stat = GdipCreateFont(family, 256.0, FontStyleRegular, UnitPixel, &font);
     ok(stat == Ok, "GdipCreateFont failed: %d\n", stat);
 
-    stat = GdipCloneFontFamily(family, &cloned_family);
-    ok(stat == Ok, "GdipCloneFontFamily failed: %d\n", stat);
-    ok(family == cloned_family, "GdipCloneFontFamily returned new object\n");
-
     /* Cleanup */
 
     stat = GdipDeleteFont(font);
@@ -109,13 +105,6 @@ static void test_long_name(void)
 
     stat = GdipDeletePrivateFontCollection(&fonts);
     ok(stat == Ok, "GdipDeletePrivateFontCollection failed: %d\n", stat);
-
-    /* Cloned family survives after collection is deleted */
-    stat = GdipGetFamilyName(cloned_family, family_name, LANG_NEUTRAL);
-    ok(stat == Ok, "GdipGetFamilyName failed: %d\n", stat);
-
-    stat = GdipDeleteFontFamily(cloned_family);
-    ok(stat == Ok, "GdipDeleteFontFamily failed: %d\n", stat);
 
     DELETE_FONTFILE(path);
 }
