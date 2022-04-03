@@ -3443,10 +3443,8 @@ ULONG CDECL wined3d_shader_decref(struct wined3d_shader *shader)
 
     if (!refcount)
     {
-        wined3d_mutex_lock();
         shader->parent_ops->wined3d_object_destroyed(shader->parent);
         wined3d_cs_destroy_object(shader->device->cs, wined3d_shader_destroy_object, shader);
-        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -3585,24 +3583,24 @@ static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_id
     return FALSE;
 }
 
-bool vshader_get_input(const struct wined3d_shader *shader,
-        uint8_t usage_req, uint8_t usage_idx_req, unsigned int *regnum)
+BOOL vshader_get_input(const struct wined3d_shader *shader,
+        BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum)
 {
-    uint32_t map = shader->reg_maps.input_registers & 0xffff;
+    WORD map = shader->reg_maps.input_registers;
     unsigned int i;
 
-    while (map)
+    for (i = 0; map; map >>= 1, ++i)
     {
-        i = wined3d_bit_scan(&map);
+        if (!(map & 1)) continue;
+
         if (match_usage(shader->u.vs.attributes[i].usage,
                 shader->u.vs.attributes[i].usage_idx, usage_req, usage_idx_req))
         {
             *regnum = i;
-            return true;
+            return TRUE;
         }
     }
-
-    return false;
+    return FALSE;
 }
 
 static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
@@ -3889,7 +3887,7 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
             return E_INVALIDARG;
         }
 
-        mask = wined3d_mask_from_size(e->component_count) << component_idx;
+        mask = ((1u << e->component_count) - 1) << component_idx;
         if ((output->mask & 0xff & mask) != mask)
         {
             WARN("Invalid component range %u-%u (mask %#x), output mask %#x.\n",
@@ -4221,7 +4219,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     }
     else
     {
-        args->texcoords_initialized = wined3d_mask_from_size(WINED3D_MAX_TEXTURES);
+        args->texcoords_initialized = (1u << WINED3D_MAX_TEXTURES) - 1;
     }
 
     args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]

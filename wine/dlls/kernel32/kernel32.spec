@@ -191,6 +191,7 @@
 # @ stub BasepCheckAppCompat
 # @ stub BasepCheckBadapp
 # @ stub BasepCheckWinSaferRestrictions
+@ stub BasepDebugDump
 # @ stub BasepFreeActivationContextActivationBlock
 # @ stub BasepFreeAppCompatData
 # @ stub BasepMapModuleHandle
