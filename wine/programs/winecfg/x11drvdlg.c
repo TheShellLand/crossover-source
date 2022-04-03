@@ -111,44 +111,17 @@ static void update_gui_for_desktop_mode(HWND dialog)
     updating_ui = FALSE;
 }
 
-static BOOL can_enable_desktop(void)
-{
-    char *value;
-    UINT guid_atom;
-    BOOL ret = FALSE;
-    char key[sizeof("System\\CurrentControlSet\\Control\\Video\\{}\\0000") + 40];
-
-    guid_atom = HandleToULong(GetPropA(GetDesktopWindow(), "__wine_display_device_guid"));
-    strcpy( key, "System\\CurrentControlSet\\Control\\Video\\{" );
-    if (!GlobalGetAtomNameA(guid_atom, key + strlen(key), 40)) return ret;
-    strcat( key, "}\\0000" );
-    if ((value = get_reg_key(HKEY_LOCAL_MACHINE, key, "GraphicsDriver", NULL)))
-    {
-        if(strcmp(value, "winemac.drv"))
-            ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, value);
-    }
-    return ret;
-}
-
 static void init_dialog(HWND dialog)
 {
     char* buf;
-    BOOL enable_desktop;
 
     convert_x11_desktop_key();
-    if ((enable_desktop = can_enable_desktop()))
-        update_gui_for_desktop_mode(dialog);
-    else
-        disable(IDC_ENABLE_DESKTOP);
+    update_gui_for_desktop_mode(dialog);
 
     updating_ui = TRUE;
 
-    if (enable_desktop)
-    {
-        SendDlgItemMessageW(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
-        SendDlgItemMessageW(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
-    }
+    SendDlgItemMessageW(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
+    SendDlgItemMessageW(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
     buf = get_reg_key(config_key, keypath("X11 Driver"), "GrabFullscreen", "N");
     if (IS_OPTION_TRUE(*buf))

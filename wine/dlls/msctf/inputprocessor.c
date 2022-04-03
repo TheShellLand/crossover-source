@@ -866,14 +866,8 @@ static HRESULT WINAPI InputProcessorProfileMgr_UnregisterProfile(ITfInputProcess
 static HRESULT WINAPI InputProcessorProfileMgr_GetActiveProfile(ITfInputProcessorProfileMgr *iface, REFGUID catid,
         TF_INPUTPROCESSORPROFILE *pProfile)
 {
-    static int once;
-
-    if (!once++)
-    {
-        InputProcessorProfiles *This = impl_from_ITfInputProcessorProfileMgr(iface);
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(catid), pProfile);
-    }
-
+    InputProcessorProfiles *This = impl_from_ITfInputProcessorProfileMgr(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(catid), pProfile);
     return E_NOTIMPL;
 }
 
