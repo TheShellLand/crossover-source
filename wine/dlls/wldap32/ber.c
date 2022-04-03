@@ -21,21 +21,18 @@
 #include "config.h"
 
 #include <stdarg.h>
-#ifdef HAVE_LDAP_H
-#include <ldap.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
-#include "winldap_private.h"
-#include "wldap32.h"
+#include "winldap.h"
 #include "wine/debug.h"
 
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 #endif
 
-#define WLDAP32_LBER_ERROR (~0U)
+#ifndef LBER_ERROR
+# define LBER_ERROR (~0U)
+#endif
 
 /***********************************************************************
  *      ber_alloc_t     (WLDAP32.@)
@@ -52,10 +49,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  * NOTES
  *  Free the berelement structure with ber_free.
  */
-WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
+BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    return pber_alloc_t( options );
+#ifdef HAVE_LDAP
+    return ber_alloc_t( options );
 #else
     return NULL;
 #endif
@@ -79,7 +76,11 @@ WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( INT options )
  */
 BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
 {
-    return bervalWtoW( berval );
+#ifdef HAVE_LDAP
+    return ber_bvdup( berval );
+#else
+    return NULL;
+#endif
 }
 
 
@@ -100,7 +101,9 @@ BERVAL * CDECL WLDAP32_ber_bvdup( BERVAL *berval )
  */
 void CDECL WLDAP32_ber_bvecfree( PBERVAL *berval )
 {
-    bvarrayfreeW( berval );
+#ifdef HAVE_LDAP
+    ber_bvecfree( berval );
+#endif
 }
 
 
@@ -121,7 +124,9 @@ void CDECL WLDAP32_ber_bvecfree( PBERVAL *berval )
  */
 void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 {
-    heap_free( berval );
+#ifdef HAVE_LDAP
+    ber_bvfree( berval );
+#endif
 }
 
 
@@ -142,25 +147,12 @@ void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
  * NOTES
  *  len and cookie should be passed to ber_next_element.
  */
-ULONG CDECL WLDAP32_ber_first_element( WLDAP32_BerElement *berelement, ULONG *ret_len, CHAR **opaque )
+ULONG CDECL WLDAP32_ber_first_element( BerElement *berelement, ULONG *len, CHAR **opaque )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    ber_len_t len;
-    ber_tag_t ret;
-
-    if ((ret = pber_first_element( berelement, &len, opaque )) != LBER_ERROR)
-    {
-        if (len > ~0u)
-        {
-            ERR( "len too large\n" );
-            return WLDAP32_LBER_ERROR;
-        }
-        *ret_len = len;
-    }
-    return ret;
-
+#ifdef HAVE_LDAP
+    return ber_first_element( berelement, len, opaque );
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -181,22 +173,12 @@ ULONG CDECL WLDAP32_ber_first_element( WLDAP32_BerElement *berelement, ULONG *re
  * NOTES
  *  Free the berval structure with ber_bvfree.
  */
-INT CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *berelement, PBERVAL *berval )
+INT CDECL WLDAP32_ber_flatten( BerElement *berelement, PBERVAL *berval )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    struct berval *bervalU;
-    struct WLDAP32_berval *bervalW;
-
-    if (pber_flatten( berelement, &bervalU )) return WLDAP32_LBER_ERROR;
-
-    bervalW = bervalUtoW( bervalU );
-    pber_bvfree( bervalU );
-    if (!bervalW) return WLDAP32_LBER_ERROR;
-    *berval = bervalW;
-    return 0;
-
+#ifdef HAVE_LDAP
+    return ber_flatten( berelement, berval );
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -217,10 +199,10 @@ INT CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *berelement, PBERVAL *berval )
  *  Set buf to 0 if the berelement was allocated with ldap_first_attribute
  *  or ldap_next_attribute, otherwise set it to 1.
  */
-void CDECL WLDAP32_ber_free( WLDAP32_BerElement *berelement, INT buf )
+void CDECL WLDAP32_ber_free( BerElement *berelement, INT buf )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    pber_free( berelement, buf );
+#ifdef HAVE_LDAP
+    ber_free( berelement, buf );
 #endif
 }
 
@@ -240,16 +222,10 @@ void CDECL WLDAP32_ber_free( WLDAP32_BerElement *berelement, INT buf )
  * NOTES
  *  Call ber_free to free the returned berelement structure.
  */
-WLDAP32_BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
+BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    struct berval *bervalU;
-    WLDAP32_BerElement *ret;
-
-    if (!(bervalU = bervalWtoU( berval ))) return NULL;
-    ret = pber_init( bervalU );
-    heap_free( bervalU );
-    return ret;
+#ifdef HAVE_LDAP
+    return ber_init( berval );
 #else
     return NULL;
 #endif
@@ -274,25 +250,12 @@ WLDAP32_BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
  *  len and cookie are initialized by ber_first_element and should
  *  be passed on in subsequent calls to ber_next_element.
  */
-ULONG CDECL WLDAP32_ber_next_element( WLDAP32_BerElement *berelement, ULONG *ret_len, CHAR *opaque )
+ULONG CDECL WLDAP32_ber_next_element( BerElement *berelement, ULONG *len, CHAR *opaque )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    ber_len_t len;
-    ber_tag_t ret;
-
-    if ((ret = pber_next_element( berelement, &len, opaque )) != LBER_ERROR)
-    {
-        if (len > ~0u)
-        {
-            ERR( "len too large\n" );
-            return WLDAP32_LBER_ERROR;
-        }
-        *ret_len = len;
-    }
-    return ret;
-
+#ifdef HAVE_LDAP
+    return ber_next_element( berelement, len, opaque );
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -310,25 +273,12 @@ ULONG CDECL WLDAP32_ber_next_element( WLDAP32_BerElement *berelement, ULONG *ret
  *  Success: Tag of the next element.
  *  Failure: LBER_DEFAULT (no more data).
  */
-ULONG CDECL WLDAP32_ber_peek_tag( WLDAP32_BerElement *berelement, ULONG *ret_len )
+ULONG CDECL WLDAP32_ber_peek_tag( BerElement *berelement, ULONG *len )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    ber_len_t len;
-    ber_tag_t ret;
-
-    if ((ret = pber_peek_tag( berelement, &len )) != LBER_ERROR)
-    {
-        if (len > ~0u)
-        {
-            ERR( "len too large\n" );
-            return WLDAP32_LBER_ERROR;
-        }
-        *ret_len = len;
-    }
-    return ret;
-
+#ifdef HAVE_LDAP
+    return ber_peek_tag( berelement, len );
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -346,25 +296,12 @@ ULONG CDECL WLDAP32_ber_peek_tag( WLDAP32_BerElement *berelement, ULONG *ret_len
  *  Success: Tag of the next element.
  *  Failure: LBER_DEFAULT (no more data).
  */
-ULONG CDECL WLDAP32_ber_skip_tag( WLDAP32_BerElement *berelement, ULONG *ret_len )
+ULONG CDECL WLDAP32_ber_skip_tag( BerElement *berelement, ULONG *len )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    ber_len_t len;
-    ber_tag_t ret;
-
-    if ((ret = pber_skip_tag( berelement, &len )) != LBER_ERROR)
-    {
-        if (len > ~0u)
-        {
-            ERR( "len too large\n" );
-            return WLDAP32_LBER_ERROR;
-        }
-        *ret_len = len;
-    }
-    return ret;
-
+#ifdef HAVE_LDAP
+    return ber_skip_tag( berelement, len );
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -387,9 +324,9 @@ ULONG CDECL WLDAP32_ber_skip_tag( WLDAP32_BerElement *berelement, ULONG *ret_len
  *  berelement must have been allocated with ber_alloc_t. This function
  *  can be called multiple times to append data.
  */
-INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
+INT WINAPIV WLDAP32_ber_printf( BerElement *berelement, PCHAR fmt, ... )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     __ms_va_list list;
     int ret = 0;
     char new_fmt[2];
@@ -406,39 +343,32 @@ INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
         case 'i':
             {
                 int i = va_arg( list, int );
-                ret = pber_printf( berelement, new_fmt, i );
+                ret = ber_printf( berelement, new_fmt, i );
                 break;
             }
         case 'o':
         case 's':
             {
                 char *str = va_arg( list, char * );
-                ret = pber_printf( berelement, new_fmt, str );
+                ret = ber_printf( berelement, new_fmt, str );
                 break;
             }
         case 't':
             {
                 unsigned int tag = va_arg( list, unsigned int );
-                ret = pber_printf( berelement, new_fmt, tag );
+                ret = ber_printf( berelement, new_fmt, tag );
                 break;
             }
         case 'v':
             {
                 char **array = va_arg( list, char ** );
-                ret = pber_printf( berelement, new_fmt, array );
+                ret = ber_printf( berelement, new_fmt, array );
                 break;
             }
         case 'V':
             {
-                struct WLDAP32_berval **array = va_arg( list, struct WLDAP32_berval ** );
-                struct berval **arrayU;
-                if (!(arrayU = bvarrayWtoU( array )))
-                {
-                    ret = -1;
-                    break;
-                }
-                ret = pber_printf( berelement, new_fmt, arrayU );
-                bvarrayfreeU( arrayU );
+                struct berval **array = va_arg( list, struct berval ** );
+                ret = ber_printf( berelement, new_fmt, array );
                 break;
             }
         case 'X':
@@ -446,7 +376,7 @@ INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
                 char *str = va_arg( list, char * );
                 int len = va_arg( list, int );
                 new_fmt[0] = 'B';  /* 'X' is deprecated */
-                ret = pber_printf( berelement, new_fmt, str, len );
+                ret = ber_printf( berelement, new_fmt, str, len );
                 break;
             }
         case 'n':
@@ -454,7 +384,7 @@ INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = pber_printf( berelement, new_fmt );
+            ret = ber_printf( berelement, new_fmt );
             break;
         default:
             FIXME( "Unknown format '%c'\n", new_fmt[0] );
@@ -466,7 +396,7 @@ INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
     __ms_va_end( list );
     return ret;
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }
 
@@ -489,9 +419,9 @@ INT WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
  *  berelement must have been allocated with ber_init. This function
  *  can be called multiple times to decode data.
  */
-INT WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
+INT WINAPIV WLDAP32_ber_scanf( BerElement *berelement, PCHAR fmt, ... )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     __ms_va_list list;
     int ret = 0;
     char new_fmt[2];
@@ -506,7 +436,7 @@ INT WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
         case 'a':
             {
                 char **ptr = va_arg( list, char ** );
-                ret = pber_scanf( berelement, new_fmt, ptr );
+                ret = ber_scanf( berelement, new_fmt, ptr );
                 break;
             }
         case 'b':
@@ -514,42 +444,38 @@ INT WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
         case 'i':
             {
                 int *i = va_arg( list, int * );
-                ret = pber_scanf( berelement, new_fmt, i );
+                ret = ber_scanf( berelement, new_fmt, i );
                 break;
             }
         case 't':
             {
                 unsigned int *tag = va_arg( list, unsigned int * );
-                ret = pber_scanf( berelement, new_fmt, tag );
+                ret = ber_scanf( berelement, new_fmt, tag );
                 break;
             }
         case 'v':
             {
                 char ***array = va_arg( list, char *** );
-                ret = pber_scanf( berelement, new_fmt, array );
+                ret = ber_scanf( berelement, new_fmt, array );
                 break;
             }
         case 'B':
             {
                 char **str = va_arg( list, char ** );
                 int *len = va_arg( list, int * );
-                ret = pber_scanf( berelement, new_fmt, str, len );
+                ret = ber_scanf( berelement, new_fmt, str, len );
                 break;
             }
         case 'O':
             {
                 struct berval **ptr = va_arg( list, struct berval ** );
-                ret = pber_scanf( berelement, new_fmt, ptr );
+                ret = ber_scanf( berelement, new_fmt, ptr );
                 break;
             }
         case 'V':
             {
-                struct WLDAP32_berval **arrayW, ***array = va_arg( list, struct WLDAP32_berval *** );
-                struct berval **arrayU;
-                if ((ret = pber_scanf( berelement, new_fmt, &arrayU )) == -1) break;
-                if ((arrayW = bvarrayUtoW( arrayU ))) *array = arrayW;
-                else ret = -1;
-                bvarrayfreeU( arrayU );
+                struct berval ***array = va_arg( list, struct berval *** );
+                ret = ber_scanf( berelement, new_fmt, array );
                 break;
             }
         case 'n':
@@ -558,7 +484,7 @@ INT WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
         case '}':
         case '[':
         case ']':
-            ret = pber_scanf( berelement, new_fmt );
+            ret = ber_scanf( berelement, new_fmt );
             break;
         default:
             FIXME( "Unknown format '%c'\n", new_fmt[0] );
@@ -570,6 +496,6 @@ INT WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *berelement, PCHAR fmt, ... )
     __ms_va_end( list );
     return ret;
 #else
-    return WLDAP32_LBER_ERROR;
+    return LBER_ERROR;
 #endif
 }

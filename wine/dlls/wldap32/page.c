@@ -39,9 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-static struct berval null_cookieU = { 0, NULL };
-static struct WLDAP32_berval null_cookieW = { 0, NULL };
+#ifdef HAVE_LDAP
+static struct berval null_cookie = { 0, NULL };
 #endif
 
 /***********************************************************************
@@ -53,7 +52,7 @@ ULONG CDECL ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlA *control )
 {
     ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     LDAPControlW *controlW = NULL;
 
     TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
@@ -73,10 +72,10 @@ ULONG CDECL ldap_create_page_controlA( WLDAP32_LDAP *ld, ULONG pagesize,
     return ret;
 }
 
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
 
 /* create a page control by hand */
-static ULONG create_page_control( ULONG pagesize, struct berval *cookie,
+static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
     UCHAR critical, PLDAPControlW *control )
 {
     LDAPControlW *ctrl;
@@ -86,16 +85,16 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie,
     INT ret, len;
     char *val;
 
-    ber = pber_alloc_t( LBER_USE_DER );
+    ber = ber_alloc_t( LBER_USE_DER );
     if (!ber) return WLDAP32_LDAP_NO_MEMORY;
 
     if (cookie)
-        tag = pber_printf( ber, "{iO}", (ber_int_t)pagesize, cookie );
+        tag = ber_printf( ber, "{iO}", (ber_int_t)pagesize, cookie );
     else
-        tag = pber_printf( ber, "{iO}", (ber_int_t)pagesize, &null_cookieU );
+        tag = ber_printf( ber, "{iO}", (ber_int_t)pagesize, &null_cookie );
 
-    ret = pber_flatten( ber, &berval );
-    pber_free( ber, 1 );
+    ret = ber_flatten( ber, &berval );
+    ber_free( ber, 1 );
 
     if (tag == LBER_ERROR)
         return WLDAP32_LDAP_ENCODING_ERROR;
@@ -108,7 +107,7 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie,
 
     len = berval->bv_len;
     memcpy( val, berval->bv_val, len );
-    pber_bvfree( berval );
+    ber_bvfree( berval );
 
     if (!(ctrl = heap_alloc( sizeof(LDAPControlW) )))
     {
@@ -149,20 +148,14 @@ static ULONG create_page_control( ULONG pagesize, struct berval *cookie,
 ULONG CDECL ldap_create_page_controlW( WLDAP32_LDAP *ld, ULONG pagesize,
     struct WLDAP32_berval *cookie, UCHAR critical, PLDAPControlW *control )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
-    struct berval *cookieU = NULL;
-    ULONG ret;
-
+#ifdef HAVE_LDAP
     TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie,
            critical, control );
 
     if (!ld || !control || pagesize > LDAP_MAXINT)
         return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (cookie && !(cookieU = bervalWtoU( cookie ))) return WLDAP32_LDAP_NO_MEMORY;
-    ret = create_page_control( pagesize, cookieU, critical, control );
-    heap_free( cookieU );
-    return ret;
+    return create_page_control( pagesize, cookie, critical, control );
 
 #else
     return WLDAP32_LDAP_NOT_SUPPORTED;
@@ -204,7 +197,7 @@ ULONG CDECL ldap_get_next_page_s( WLDAP32_LDAP *ld, PLDAPSearch search,
     }
 
     TRACE("search->cookie: %s\n", search->cookie ? debugstr_an(search->cookie->bv_val, search->cookie->bv_len) : "NULL");
-    ret = ldap_create_page_controlW( ld, pagesize, search->cookie, 1, &search->serverctrls[0] );
+    ret = ldap_create_page_controlW( ld, pagesize, (struct WLDAP32_berval *)search->cookie, 1, &search->serverctrls[0] );
     if (ret != WLDAP32_LDAP_SUCCESS) return ret;
 
     ret = ldap_search_ext_sW( ld, search->dn, search->scope,
@@ -237,17 +230,17 @@ ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, PLDAPSearch search,
 
     if (!server_ctrls) /* assume end of paged results */
     {
-        search->cookie = &null_cookieW;
+        search->cookie = &null_cookie;
         return WLDAP32_LDAP_SUCCESS;
     }
 
     if (search->cookie)
     {
-        heap_free( search->cookie );
+        ber_bvfree( search->cookie );
         search->cookie = NULL;
     }
 
-    ret = ldap_parse_page_controlW( ld, server_ctrls, count, &search->cookie );
+    ret = ldap_parse_page_controlW( ld, server_ctrls, count, (struct WLDAP32_berval **)&search->cookie );
     if (ret == WLDAP32_LDAP_SUCCESS)
         TRACE("new search->cookie: %s, count %u\n", debugstr_an(search->cookie->bv_val, search->cookie->bv_len), *count);
 
@@ -266,7 +259,7 @@ ULONG CDECL ldap_parse_page_controlA( WLDAP32_LDAP *ld, PLDAPControlA *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
     ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     LDAPControlW **ctrlsW = NULL;
 
     TRACE( "(%p, %p, %p, %p)\n", ld, ctrls, count, cookie );
@@ -291,9 +284,8 @@ ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
     ULONG *count, struct WLDAP32_berval **cookie )
 {
     ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     LDAPControlW *control = NULL;
-    struct berval *cookieU = NULL, *valueU;
     BerElement *ber;
     ber_tag_t tag;
     ULONG i;
@@ -310,41 +302,27 @@ ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, PLDAPControlW *ctrls,
     }
 
     if (!control)
-        return WLDAP32_LDAP_CONTROL_NOT_FOUND;
-
-    if (cookie && !(cookieU = bervalWtoU( *cookie )))
-        return WLDAP32_LDAP_NO_MEMORY;
-
-    if (!(valueU = bervalWtoU( &control->ldctl_value )))
-    {
-        heap_free( cookieU );
-        return WLDAP32_LDAP_NO_MEMORY;
-    }
-
-    ber = pber_init( valueU );
-    heap_free( valueU );
+        return WLDAP32_LDAP_CONTROL_NOT_FOUND; 
+            
+    ber = ber_init( &((LDAPControl *)control)->ldctl_value );
     if (!ber)
-    {
-        heap_free( cookieU );
         return WLDAP32_LDAP_NO_MEMORY;
-    }
 
-    tag = pber_scanf( ber, "{iO}", count, &cookieU );
-    if (tag == LBER_ERROR)
+    tag = ber_scanf( ber, "{iO}", count, cookie );
+    if ( tag == LBER_ERROR )
         ret = WLDAP32_LDAP_DECODING_ERROR;
     else
         ret = WLDAP32_LDAP_SUCCESS;
 
-    heap_free( cookieU );
-    pber_free( ber, 1 );
-
+    ber_free( ber, 1 );
+    
 #endif
     return ret;
 }
 
 ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     LDAPControlW **ctrls;
 
     TRACE( "(%p, %p)\n", ld, search );
@@ -360,8 +338,8 @@ ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, PLDAPSearch search )
     while (*ctrls) controlfreeW( *ctrls++ );
     heap_free( search->serverctrls );
     controlarrayfreeW( search->clientctrls );
-    if (search->cookie && search->cookie != &null_cookieW)
-        heap_free( search->cookie );
+    if (search->cookie && search->cookie != &null_cookie)
+        ber_bvfree( search->cookie );
     heap_free( search );
 
     return WLDAP32_LDAP_SUCCESS;
@@ -384,7 +362,7 @@ PLDAPSearch CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, PWCHAR dn, ULONG sco
     PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
     PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, PLDAPSortKeyW *sortkeys )
 {
-#if defined(HAVE_LDAP) && !defined(__i386_on_x86_64__)
+#ifdef HAVE_LDAP
     LDAPSearch *search;
     DWORD i, len;
 

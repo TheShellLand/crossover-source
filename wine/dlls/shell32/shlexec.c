@@ -1881,8 +1881,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         buf = heap_alloc(size * sizeof(WCHAR));
         if (!buf || FAILED(PathCreateFromUrlW(sei_tmp.lpFile, buf, &size, 0))) {
             heap_free(buf);
-            retval = SE_ERR_OOM;
-            goto end;
+            return SE_ERR_OOM;
         }
 
         heap_free(wszApplicationName);
